@@ -1,7 +1,8 @@
 from .data_preprocessing import build_transform
-from .download_cifar100 import download_dataset
+from .download_cifar100 import download_dataset, prep_data_loader
 
 __all__ = [
     build_transform,
     download_dataset,
+    prep_data_loader,
 ]

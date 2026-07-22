@@ -221,3 +221,7 @@ __marimo__/
 
 # Notebooks
 ConvNet.ipynb
+
+# Data
+data/*
+!data/.gitkeep
