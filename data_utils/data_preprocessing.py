@@ -1,7 +1,6 @@
 import torch
 from torchvision.transforms import v2
 
-
 def build_transform(cfg, is_train=True):
     if is_train:
         transform = v2.Compose([
