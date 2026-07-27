@@ -225,3 +225,6 @@ ConvNet.ipynb
 # Data
 data/*
 !data/.gitkeep
+
+# Hydra
+outputs/

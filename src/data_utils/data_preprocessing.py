@@ -1,5 +1,7 @@
 import torch
+from torch.utils.data import DataLoader
 from torchvision.transforms import v2
+
 
 def build_transform(cfg, is_train=True):
     if is_train:
@@ -21,3 +23,8 @@ def build_transform(cfg, is_train=True):
             v2.Normalize(mean=cfg.INPUT.PIXEL_MEAN, std=cfg.INPUT.PIXEL_STD),
         ])
     return transform
+
+
+def prep_data_loader(cfg, dataset, is_train=True):
+    batch_size = cfg.SOLVER.IMS_PER_BATCH if is_train else cfg.TEST.IMS_PER_BATCH
+    return DataLoader(dataset, batch_size=batch_size, shuffle=True)
