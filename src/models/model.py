@@ -68,8 +68,8 @@ class Block(nn.Module):
 class ResNet(nn.Module):
     def __init__(self, ResBlock, layer_list, num_classes, num_channels=3):
         super(ResNet, self).__init__()
-        self.num_classes = num_classes
-        in_channels = 64
+        self.in_channels = 64
+
         self.conv1 = nn.Conv2d(
             num_channels, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.batch_norm1 = nn.BatchNorm2d(64)
@@ -105,12 +105,12 @@ class ResNet(nn.Module):
         ii_downsample = None
         layers = []
 
-        if self.stride != 1 or self.in_channels != planes * ResBlock.expansion:
-            ii_downsample = nn.Sequential([
+        if stride != 1 or self.in_channels != planes * ResBlock.expansion:
+            ii_downsample = nn.Sequential(
                 nn.Conv2d(self.in_channels, planes *
                           ResBlock.expansion, kernel_size=1, stride=stride),
                 nn.BatchNorm2d(planes * ResBlock.expansion),
-            ])
+            )
             layers.append(ResBlock(self.in_channels, planes,
                           i_downsample=ii_downsample, stride=stride))
             self.in_channels = planes * ResBlock.expansion
@@ -122,3 +122,8 @@ class ResNet(nn.Module):
 
 def ResNet50(num_classes, channels=3):
     return ResNet(Bottleneck, [3, 4, 6, 3], num_classes, channels)
+
+
+if __name__ == "__main__":
+    model = ResNet50(100, 3)
+    print(model)

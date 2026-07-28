@@ -1,6 +1,6 @@
-from .model import CNN
+from .model import ResNet50
 
 
 def build_model(cfg, is_train=True):
-    model = CNN(cfg.MODEL.NUM_CLASSES)
+    model = ResNet50(cfg.MODEL.NUM_CLASSES, channels=3)
     return model.train() if is_train else model.eval()
