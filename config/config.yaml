@@ -23,6 +23,7 @@ INPUT:
 
 MODEL:
   DEVICE: cuda
+  NAME: ResNet32
   NUM_CLASSES: 100
 
 OUTPUT_DIR: ""
