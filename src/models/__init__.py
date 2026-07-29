@@ -8,8 +8,8 @@ _MODELS = {
 }
 
 
-def build_model(cfg, model_name, is_train=True):
+def build_model(cfg, model_name):
     if model_name not in _MODELS:
         raise NotImplementedError(f"Unknown model: {model_name}")
     model = _MODELS[model_name](cfg.MODEL.NUM_CLASSES, channels=3)
-    return model.train() if is_train else model.eval()
+    return model

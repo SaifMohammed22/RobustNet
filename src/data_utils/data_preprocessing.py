@@ -1,5 +1,5 @@
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 from torchvision.transforms import v2
 
 
@@ -28,3 +28,12 @@ def build_transform(cfg, is_train=True):
 def prep_data_loader(cfg, dataset, is_train=True):
     batch_size = cfg.SOLVER.IMS_PER_BATCH if is_train else cfg.TEST.IMS_PER_BATCH
     return DataLoader(dataset, batch_size=batch_size, shuffle=True)
+
+
+def train_val_split(train_set, val_ratio=0.1, seed=42):
+    N = train_set.data.shape[0]
+    val_size = int(val_ratio * N)
+    train_size = N - val_size
+    train_subset, val_subset = random_split(
+        train_set, [train_size, val_size], generator=torch.Generator().manual_seed(seed))
+    return train_subset, val_subset

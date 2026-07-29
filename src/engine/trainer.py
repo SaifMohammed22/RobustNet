@@ -1,4 +1,8 @@
 """The training epoch function"""
+from utils import get_logger
+
+logger = get_logger(__name__)
+
 
 def train_one_epoch(cfg, model, optimizer, train_loader, loss_fn):
     running_loss = 0.0
@@ -6,6 +10,8 @@ def train_one_epoch(cfg, model, optimizer, train_loader, loss_fn):
 
     for i, data in enumerate(train_loader):
         images, labels = data
+        images, labels = images.to(
+            cfg.MODEL.DEVICE), labels.to(cfg.MODEL.DEVICE)
 
         optimizer.zero_grad()
         outputs = model(images)
@@ -14,8 +20,8 @@ def train_one_epoch(cfg, model, optimizer, train_loader, loss_fn):
         optimizer.step()
 
         running_loss += loss.item()
-        if i % cfg.SOLVER.LOG_PERIOD == 0:
+        if (i + 1) % cfg.SOLVER.LOG_PERIOD == 0:
             last_loss = running_loss / cfg.SOLVER.LOG_PERIOD
-            print(f"    batch {i + 1} train loss: {last_loss}") 
+            logger.info(f"  batch {i + 1} train loss: {last_loss}")
             running_loss = 0.0
     return last_loss
