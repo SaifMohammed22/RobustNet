@@ -12,4 +12,4 @@ def build_model(cfg, model_name):
     if model_name not in _MODELS:
         raise NotImplementedError(f"Unknown model: {model_name}")
     model = _MODELS[model_name](cfg.MODEL.NUM_CLASSES, channels=3)
-    return model
+    return model.to(cfg.MODEL.DEVICE)
