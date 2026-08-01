@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 def train(cfg):
     writer = SummaryWriter("runs")
     EPOCHS = cfg.SOLVER.MAX_EPOCHS
-    model = build_model(cfg, cfg.MODEL.NAME, is_train=True)
+    model = build_model(cfg, cfg.MODEL.NAME)
     train_transform = build_transform(cfg, is_train=True)
     train_set = download_dataset(cfg, train_transform, is_train=True)
     train_subset, val_subset = train_val_split(train_set)
