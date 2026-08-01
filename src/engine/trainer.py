@@ -22,6 +22,6 @@ def train_one_epoch(cfg, model, optimizer, train_loader, loss_fn):
         running_loss += loss.item()
         if (i + 1) % cfg.SOLVER.LOG_PERIOD == 0:
             last_loss = running_loss / cfg.SOLVER.LOG_PERIOD
-            logger.info(f"  batch {i + 1} train loss: {last_loss}")
+            # logger.info(f"  batch {i + 1} train loss: {last_loss}")
             running_loss = 0.0
     return last_loss
