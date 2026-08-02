@@ -18,4 +18,4 @@ def test_one_epoch(cfg, model, test_loader, loss_fn):
             loss = loss_fn(outputs, labels)
             running_loss += loss.item()
 
-    return running_loss
+    return running_loss / (i + 1)

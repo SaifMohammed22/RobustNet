@@ -20,4 +20,4 @@ def train_one_epoch(cfg, model, optimizer, train_loader, loss_fn):
 
         running_loss += loss.item()
 
-    return running_loss
+    return running_loss / (i + 1)
