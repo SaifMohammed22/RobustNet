@@ -1,11 +1,10 @@
 """The training epoch function"""
-from utils import get_logger
-
-logger = get_logger(__name__)
 
 
 def train_one_epoch(cfg, model, optimizer, train_loader, loss_fn):
     running_loss = 0.0
+    correct = 0
+    total = 0
 
     for i, data in enumerate(train_loader):
         images, labels = data
@@ -19,5 +18,8 @@ def train_one_epoch(cfg, model, optimizer, train_loader, loss_fn):
         optimizer.step()
 
         running_loss += loss.item()
+        preds = outputs.argmax(dim=1)
+        correct += (preds == labels).sum().item()
+        total += labels.size(0)
 
-    return running_loss / (i + 1)
+    return running_loss / len(train_loader), correct / total

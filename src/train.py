@@ -28,15 +28,16 @@ def train(cfg):
     patience, trigger = 5, 0
     for epoch in range(EPOCHS):
         model.train()
-        train_loss = train_one_epoch(cfg, model, optimizer, train_loader, loss)
+        train_loss, train_acc = train_one_epoch(cfg, model, optimizer, train_loader, loss)
         writer.add_scalar("Loss/train", train_loss, epoch)
+        writer.add_scalar("Accuracy/train", train_acc, epoch)
 
         model.eval()
-        val_loss = test_one_epoch(cfg, model, val_loader, loss)
+        val_loss, val_acc = test_one_epoch(cfg, model, val_loader, loss)
         writer.add_scalar("Loss/val", val_loss, epoch)
-
+        writer.add_scalar("Accuracy/val", val_acc, epoch)
         logger.info(
-            f"Epoch {epoch + 1}: train={train_loss:.4f} val={val_loss:.4f}")
+            f"Epoch {epoch + 1}: train_loss={train_loss:.4f} train_acc={train_acc:.4f} | val_loss={val_loss:.4f} val_acc={val_acc:.4f}")
 
         if (epoch + 1) % cfg.SOLVER.CHECKPOINT_PERIOD == 0:
             torch.save(model.state_dict(), f"checkpoint_epoch_{epoch + 1}.pth")
@@ -58,8 +59,8 @@ def train(cfg):
     model.load_state_dict(torch.load(
         "best_model.pth", map_location=cfg.MODEL.DEVICE))
     model.eval()
-    test_loss = test_one_epoch(cfg, model, test_loader, loss)
-    logger.info(f"Test loss: {test_loss:.4f}")
+    test_loss, test_acc = test_one_epoch(cfg, model, test_loader, loss)
+    logger.info(f"Test loss: {test_loss:.4f}  Test accuracy: {test_acc:.4f}")
 
 
 if __name__ == "__main__":
