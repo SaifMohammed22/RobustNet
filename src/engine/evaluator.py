@@ -8,7 +8,7 @@ def test_one_epoch(cfg, model, test_loader, loss_fn):
     total = 0
 
     with torch.no_grad():
-        for i, data in enumerate(test_loader):
+        for data in test_loader:
             images, labels = data
             images, labels = images.to(
                 cfg.MODEL.DEVICE), labels.to(cfg.MODEL.DEVICE)

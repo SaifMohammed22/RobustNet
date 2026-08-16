@@ -6,7 +6,7 @@ def train_one_epoch(cfg, model, optimizer, train_loader, loss_fn):
     correct = 0
     total = 0
 
-    for i, data in enumerate(train_loader):
+    for data in train_loader:
         images, labels = data
         images, labels = images.to(
             cfg.MODEL.DEVICE), labels.to(cfg.MODEL.DEVICE)
