@@ -1,9 +1,13 @@
+hydra:
+  run:
+    dir: .
+
 ACTION: train
 RESUME: false
 CHECKPOINT: null
 
 DATALOADER:
-  NUM_WORKERS: 8
+  NUM_WORKERS: 2 # to work with colab
 
 DATASET:
   DIR: data
