@@ -1,3 +1,4 @@
+import hydra
 import logging
 
 
@@ -13,4 +14,8 @@ def get_logger(name=__name__):
         )
         handler.setFormatter(formatter)
         logger.addHandler(handler)
+
+        file_handler = logging.FileHandler(f"{hydra.utils.get_original_cwd()}/outputs/{hydra.utils.get_run_dir().split('/')[-2]}/train.log")
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
     return logger

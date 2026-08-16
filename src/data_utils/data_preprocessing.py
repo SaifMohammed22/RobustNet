@@ -27,7 +27,7 @@ def build_transform(cfg, is_train=True):
 
 def prep_data_loader(cfg, dataset, is_train=True):
     batch_size = cfg.SOLVER.IMS_PER_BATCH if is_train else cfg.TEST.IMS_PER_BATCH
-    return DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    return DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=cfg.DATALOADER.NUM_WORKERS)
 
 
 def train_val_split(train_set, val_ratio=0.1, seed=42):
