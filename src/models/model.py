@@ -141,6 +141,6 @@ if __name__ == "__main__":
 
     for name, model_fn in [("ResNet20", ResNet20), ("ResNet32", ResNet32),
                            ("ResNet44", ResNet44), ("ResNet56", ResNet56)]:
-        model = model_fn(100, 3)
+        model = model_fn(10, 3)
         flops, params = profile(model, inputs=(torch.randn(1, 3, 32, 32),), verbose=False)
         print(f"{name:>8} | params: {params/1e6:.2f}M | flops: {flops/1e6:.1f}M")
