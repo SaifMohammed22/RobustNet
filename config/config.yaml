@@ -2,7 +2,6 @@ hydra:
   run:
     dir: .
 
-ACTION: train
 RESUME: false
 CHECKPOINT: null
 
@@ -40,7 +39,7 @@ SOLVER:
   GAMMA: 0.1
   IMS_PER_BATCH: 16
   LOG_PERIOD: 100
-  MAX_EPOCHS: 1000
+  MAX_EPOCHS: 500
   MOMENTUM: 0.9
   OPTIMIZER_NAME: SGD
   STEPS: (30000,)

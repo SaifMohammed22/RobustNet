@@ -18,24 +18,6 @@ def train(cfg):
 
     EPOCHS = cfg.SOLVER.MAX_EPOCHS
 
-    if cfg.ACTION == "eval":
-        if not cfg.CHECKPOINT:
-            raise ValueError("CHECKPOINT required for eval mode")
-        model = build_model(cfg, cfg.MODEL.NAME)
-        ckpt = torch.load(cfg.CHECKPOINT, map_location=cfg.MODEL.DEVICE)
-        model.load_state_dict(ckpt["model_state_dict"])
-        model.eval()
-
-        test_transform = build_transform(cfg, is_train=False)
-        test_set = download_dataset(
-            cfg, transform=test_transform, is_train=False)
-        test_loader = prep_data_loader(cfg, test_set, is_train=False)
-        loss = F.cross_entropy
-        test_loss, test_acc = test_one_epoch(cfg, model, test_loader, loss)
-        logger.info(
-            f"Test loss: {test_loss:.4f}  Test accuracy: {test_acc:.4f}")
-        return
-
     model = build_model(cfg, cfg.MODEL.NAME)
     train_transform = build_transform(cfg, is_train=True)
     train_set = download_dataset(cfg, train_transform, is_train=True)
@@ -48,7 +30,9 @@ def train(cfg):
 
     start_epoch = 0
     best_val_loss = float("inf")
-    patience, trigger = 5, 0
+    # Early stopping
+    patience, trigger = 10, 0
+
     if cfg.RESUME and cfg.CHECKPOINT:
         ckpt = torch.load(cfg.CHECKPOINT, map_location=cfg.MODEL.DEVICE)
         model.load_state_dict(ckpt["model_state_dict"])
@@ -58,6 +42,7 @@ def train(cfg):
         best_val_loss = ckpt["best_val_loss"]
         trigger = ckpt["trigger"]
         logger.info(f"Resume from epoch {start_epoch}")
+
     for epoch in range(start_epoch, EPOCHS):
         model.train()
         train_loss, train_acc = train_one_epoch(
@@ -107,7 +92,8 @@ def train(cfg):
     model.load_state_dict(ckpt["model_state_dict"])
     model.eval()
     test_loss, test_acc = test_one_epoch(cfg, model, test_loader, loss)
-    logger.info(f"Test loss: {test_loss:.4f}  Test accuracy: {test_acc:.4f}")
+    test_error = 1 - test_acc
+    logger.info(f"Test loss: {test_loss:.4f}  Test accuracy: {test_acc:.4f}  Test Error Rate: {test_error:.4f}")
 
 
 if __name__ == "__main__":
