@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import hydra
 import torch
 import torch.nn.functional as F
@@ -6,7 +7,8 @@ from torch.utils.tensorboard import SummaryWriter
 from utils import build_optimizer, build_scheduler, get_logger
 from models import build_model
 from engine import train_one_epoch, test_one_epoch
-from data_utils import download_dataset, prep_data_loader, build_transform, train_val_split
+from data_utils import download_dataset, prep_data_loader, build_transform, train_val_split, train_calib_split
+from cp import compute_quantile, conformal_scores
 
 logger = get_logger(__name__)
 os.makedirs("checkpoints", exist_ok=True)
@@ -22,8 +24,10 @@ def train(cfg):
     train_transform = build_transform(cfg, is_train=True)
     train_set = download_dataset(cfg, train_transform, is_train=True)
     train_subset, val_subset = train_val_split(train_set)
+    train_subset, calib_subset = train_calib_split(train_subset, cfg.CP.CALIB_SIZE)
     train_loader = prep_data_loader(cfg, train_subset, is_train=True)
     val_loader = prep_data_loader(cfg, val_subset, is_train=False)
+    calib_loader = prep_data_loader(cfg, calib_subset, is_train=False)
     loss = F.cross_entropy
     optimizer = build_optimizer(cfg, model)
     scheduler = build_scheduler(cfg, optimizer)
@@ -91,6 +95,29 @@ def train(cfg):
     ckpt = torch.load("best_model.pth", map_location=cfg.MODEL.DEVICE)
     model.load_state_dict(ckpt["model_state_dict"])
     model.eval()
+
+    n_classes = cfg.MODEL.NUM_CLASSES
+    alpha = cfg.CP.ALPHA
+
+    scores, calib_labels = [], []
+    with torch.no_grad():
+        for images, labels in calib_loader:
+            images = images.to(cfg.MODEL.DEVICE)
+            outputs = model(images)
+            probas = torch.softmax(outputs, dim=1)
+            scores.append(conformal_scores(probas, labels))
+            calib_labels.append(labels)
+    scores = np.concatenate(scores)
+    calib_labels = torch.cat(calib_labels)
+
+    quantile = compute_quantile(scores, alpha)
+
+    ckpt["quantile"] = quantile
+    ckpt["alpha"] = alpha
+    ckpt["num_classes"] = n_classes
+    torch.save(ckpt, "best_model.pth")
+    logger.info(f"Conformal quantile q = {quantile:.4f} (alpha={alpha}, calib_size={len(scores)})")
+
     test_loss, test_acc = test_one_epoch(cfg, model, test_loader, loss)
     test_error = 1 - test_acc
     logger.info(f"Test loss: {test_loss:.4f}  Test accuracy: {test_acc:.4f}  Test Error Rate: {test_error:.4f}")

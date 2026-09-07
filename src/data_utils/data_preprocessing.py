@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from torch.utils.data import DataLoader, random_split
 from torchvision.transforms import v2
@@ -37,3 +38,12 @@ def train_val_split(train_set, val_ratio=0.1, seed=42):
     train_subset, val_subset = random_split(
         train_set, [train_size, val_size], generator=torch.Generator().manual_seed(seed))
     return train_subset, val_subset
+
+
+def train_calib_split(train_set, calib_size=1000, seed=42):
+    N = train_set.data.shape[0]
+    train_size = N - calib_size
+    train_subset, calib_subset = random_split(
+        train_set, [train_size, calib_size], generator=torch.Generator().manual_seed(seed))
+    return train_subset, calib_subset
+
