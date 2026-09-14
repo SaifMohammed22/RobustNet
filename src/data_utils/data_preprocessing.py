@@ -32,7 +32,7 @@ def prep_data_loader(cfg, dataset, is_train=True):
 
 
 def train_val_split(train_set, val_ratio=0.1, seed=42):
-    N = train_set.data.shape[0]
+    N = len(train_set)
     val_size = int(val_ratio * N)
     train_size = N - val_size
     train_subset, val_subset = random_split(
@@ -41,7 +41,7 @@ def train_val_split(train_set, val_ratio=0.1, seed=42):
 
 
 def train_calib_split(train_set, calib_size=1000, seed=42):
-    N = train_set.data.shape[0]
+    N = len(train_set)
     train_size = N - calib_size
     train_subset, calib_subset = random_split(
         train_set, [train_size, calib_size], generator=torch.Generator().manual_seed(seed))
