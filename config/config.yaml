@@ -5,6 +5,10 @@ hydra:
 RESUME: false
 CHECKPOINT: null
 
+INFERENCE:
+  IMAGE_PATH: null
+  LABEL: null
+
 CP:
   ALPHA: 0.1
   CALIB_SIZE: 1000
