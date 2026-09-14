@@ -1,17 +1,16 @@
-"""Inference with conformal prediction sets."""
-import os
+"""Conformal prediction inference for a single input sample."""
 import hydra
 import torch
+from PIL import Image
 from utils import get_logger
 from models import build_model
-from data_utils import download_dataset, prep_data_loader, build_transform
+from data_utils import build_transform
 from cp import prediction_sets
 
 logger = get_logger(__name__)
 
 
-@hydra.main(version_base=None, config_path="../config", config_name="config.yaml")
-def inference(cfg):
+def inference(cfg, image):
     if not cfg.CHECKPOINT:
         raise ValueError("CHECKPOINT required for inference")
 
@@ -25,37 +24,33 @@ def inference(cfg):
     n_classes = ckpt.get("num_classes", cfg.MODEL.NUM_CLASSES)
     logger.info(f"Using quantile q={quantile:.4f} (alpha={alpha})")
 
-    test_transform = build_transform(cfg, is_train=False)
-    test_set = download_dataset(cfg, transform=test_transform, is_train=False)
-    test_loader = prep_data_loader(cfg, test_set, is_train=False)
-
-    correct = 0
-    total = 0
-    set_sizes = []
+    transform = build_transform(cfg, is_train=False)
 
     with torch.no_grad():
-        for images, labels in test_loader:
-            images, labels = images.to(cfg.MODEL.DEVICE), labels.to(cfg.MODEL.DEVICE)
-            logits = model(images)
-            probas = torch.softmax(logits, dim=1)
-            sets = prediction_sets(probas, quantile, n_classes)
+        if isinstance(image, torch.Tensor):
+            image = image.unsqueeze(0) if image.ndim == 3 else image
+            image = image.to(cfg.MODEL.DEVICE)
+        else:
+            image = transform(image).unsqueeze(0).to(cfg.MODEL.DEVICE)
+        logits = model(image)
+        probas = torch.softmax(logits, dim=1)
+        pred_set = prediction_sets(probas, quantile, n_classes)[0]
 
-            labels_np = labels.cpu().numpy()
-            for _, (pred_set, label) in enumerate(zip(sets, labels_np)):
-                covered = int(label in pred_set)
-                correct += covered
-                total += 1
-                set_sizes.append(len(pred_set))
-                logger.info(
-                    f"Sample {total}: true={label} set={sorted(pred_set)} "
-                    f"size={len(pred_set)} covered={bool(covered)}")
+    logger.info(f"set={sorted(pred_set)} size={len(pred_set)}")
+    return pred_set
 
-    coverage = correct / total
-    avg_set_size = sum(set_sizes) / len(set_sizes)
-    logger.info(
-        f"Test coverage: {coverage:.4f} (target {1 - alpha:.4f})  "
-        f"Avg prediction set size: {avg_set_size:.4f}")
+
+@hydra.main(version_base=None, config_path="../config", config_name="config.yaml")
+def main(cfg):
+    image_path = cfg.get("IMAGE_PATH")
+    if not image_path:
+        raise ValueError("IMAGE_PATH config is required (e.g. IMAGE_PATH=/path/to/img.png)")
+
+    image = Image.open(image_path).convert("RGB")
+    logger.info(f"Running inference on {image_path}")
+    pred_set = inference(cfg, image)
+    logger.info(f"Result: set_size={len(pred_set)}")
 
 
 if __name__ == "__main__":
-    inference()
+    main()
