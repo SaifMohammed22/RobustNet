@@ -1,10 +1,17 @@
-from .data_preprocessing import build_transform, prep_data_loader, train_val_split, train_calib_split
-from .download_cifar10 import download_dataset
-
-__all__ = [
+from .data_preprocessing import (
     build_transform,
     prep_data_loader,
     train_val_split,
     train_calib_split,
-    download_dataset,
+    TransformedDataset,
+)
+from .download_cifar10 import download_dataset
+
+__all__ = [
+    "build_transform",
+    "prep_data_loader",
+    "train_val_split",
+    "train_calib_split",
+    "TransformedDataset",
+    "download_dataset",
 ]

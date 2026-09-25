@@ -1,7 +1,26 @@
 import numpy as np
 import torch
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision.transforms import v2
+
+
+class TransformedDataset(Dataset):
+    """Wraps a Dataset or Subset and applies a transform to its samples."""
+    def __init__(self, dataset, transform=None):
+        self.dataset = dataset
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, idx):
+        item = self.dataset[idx]
+        if isinstance(item, tuple) and len(item) == 2:
+            img, label = item
+            if self.transform is not None:
+                img = self.transform(img)
+            return img, label
+        return item
 
 
 def build_transform(cfg, is_train=True):
@@ -28,7 +47,7 @@ def build_transform(cfg, is_train=True):
 
 def prep_data_loader(cfg, dataset, is_train=True):
     batch_size = cfg.SOLVER.IMS_PER_BATCH if is_train else cfg.TEST.IMS_PER_BATCH
-    return DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=cfg.DATALOADER.NUM_WORKERS)
+    return DataLoader(dataset, batch_size=batch_size, shuffle=is_train, num_workers=cfg.DATALOADER.NUM_WORKERS)
 
 
 def train_val_split(train_set, val_ratio=0.1, seed=42):

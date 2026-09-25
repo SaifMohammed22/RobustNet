@@ -7,7 +7,14 @@ from torch.utils.tensorboard import SummaryWriter
 from utils import build_optimizer, build_scheduler, get_logger
 from models import build_model
 from engine import train_one_epoch, test_one_epoch
-from data_utils import download_dataset, prep_data_loader, build_transform, train_val_split, train_calib_split
+from data_utils import (
+    download_dataset,
+    prep_data_loader,
+    build_transform,
+    train_val_split,
+    train_calib_split,
+    TransformedDataset,
+)
 from cp import compute_quantile, conformal_scores
 
 logger = get_logger(__name__)
@@ -22,12 +29,15 @@ def train(cfg):
 
     model = build_model(cfg, cfg.MODEL.NAME)
     train_transform = build_transform(cfg, is_train=True)
-    train_set = download_dataset(cfg, train_transform, is_train=True)
-    train_subset, val_subset = train_val_split(train_set)
+    val_transform = build_transform(cfg, is_train=False)
+
+    raw_train_set = download_dataset(cfg, transform=None, is_train=True)
+    train_subset, val_subset = train_val_split(raw_train_set)
     train_subset, calib_subset = train_calib_split(train_subset, cfg.CP.CALIB_SIZE)
-    train_loader = prep_data_loader(cfg, train_subset, is_train=True)
-    val_loader = prep_data_loader(cfg, val_subset, is_train=False)
-    calib_loader = prep_data_loader(cfg, calib_subset, is_train=False)
+
+    train_loader = prep_data_loader(cfg, TransformedDataset(train_subset, train_transform), is_train=True)
+    val_loader = prep_data_loader(cfg, TransformedDataset(val_subset, val_transform), is_train=False)
+    calib_loader = prep_data_loader(cfg, TransformedDataset(calib_subset, val_transform), is_train=False)
     loss = F.cross_entropy
     optimizer = build_optimizer(cfg, model)
     scheduler = build_scheduler(cfg, optimizer)
@@ -35,7 +45,8 @@ def train(cfg):
     start_epoch = 0
     best_val_loss = float("inf")
     # Early stopping
-    patience, trigger = 10, 0
+    patience = getattr(cfg.SOLVER, "EARLY_STOPPING_PATIENCE", 30)
+    trigger = 0
 
     if cfg.RESUME and cfg.CHECKPOINT:
         ckpt = torch.load(cfg.CHECKPOINT, map_location=cfg.MODEL.DEVICE)
@@ -61,7 +72,13 @@ def train(cfg):
         logger.info(
             f"Epoch {epoch + 1}: train_loss={train_loss:.4f} train_acc={train_acc:.4f} | val_loss={val_loss:.4f} val_acc={val_acc:.4f}")
 
+        prev_lr = optimizer.param_groups[0]["lr"]
         scheduler.step()
+        curr_lr = optimizer.param_groups[0]["lr"]
+        if curr_lr < prev_lr:
+            logger.info(
+                f"Learning rate decreased from {prev_lr:.6f} to {curr_lr:.6f}. Resetting early stopping trigger.")
+            trigger = 0
 
         checkpoint = {
             "epoch": epoch + 1,
@@ -84,8 +101,10 @@ def train(cfg):
             torch.save(checkpoint, "best_model.pth")
         else:
             trigger += 1
+            checkpoint["trigger"] = trigger
             if trigger >= patience:
-                logger.info("Early stopping triggered")
+                logger.info(
+                    f"Early stopping triggered after {patience} epochs without improvement.")
                 break
 
     test_transform = build_transform(cfg, is_train=False)
