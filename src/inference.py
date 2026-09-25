@@ -7,7 +7,7 @@ from models import build_model
 from data_utils import build_transform
 from cp import prediction_sets
 
-logger = get_logger(__name__)
+logger = get_logger(__name__, log_file="inference.log")
 
 
 def inference(cfg, image):
@@ -42,9 +42,12 @@ def inference(cfg, image):
 
 @hydra.main(version_base=None, config_path="../config", config_name="config.yaml")
 def main(cfg):
-    image_path = cfg.get("IMAGE_PATH")
+    inference_cfg = getattr(cfg, "INFERENCE", None)
+    image_path = getattr(inference_cfg, "IMAGE_PATH", None) if inference_cfg is not None else None
     if not image_path:
-        raise ValueError("IMAGE_PATH config is required (e.g. IMAGE_PATH=/path/to/img.png)")
+        image_path = cfg.get("IMAGE_PATH")
+    if not image_path:
+        raise ValueError("IMAGE_PATH config is required (e.g. INFERENCE.IMAGE_PATH=/path/to/img.png)")
 
     image = Image.open(image_path).convert("RGB")
     logger.info(f"Running inference on {image_path}")
